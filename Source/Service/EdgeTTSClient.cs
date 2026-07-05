@@ -37,7 +37,7 @@ namespace RimTalkTTS.Simple.Service
 
                     if (audioData == null || audioData.Length == 0)
                     {
-                        TTSLogger.Warning("EdgeTTS: No audio data received", "EdgeTTS");
+                        TTSLogger.WarningNotify("Edge TTS: 未收到音频数据", "EdgeTTS");
                         return null;
                     }
 
@@ -51,7 +51,7 @@ namespace RimTalkTTS.Simple.Service
             }
             catch (Exception ex)
             {
-                TTSLogger.Error($"EdgeTTS: {ex.GetType().Name}: {ex.Message}", "EdgeTTS");
+                TTSLogger.ErrorNotify($"Edge TTS 异常: {ex.GetType().Name}: {ex.Message}", "EdgeTTS");
                 return null;
             }
         }

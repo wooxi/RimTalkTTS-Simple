@@ -46,6 +46,8 @@ namespace RimTalkTTS.Simple.Patch
                     .FirstOrDefault(a => a.FullName.Contains("RimTalk"));
                 if (RimTalkAssembly != null)
                     TTSLogger.Info($"Found RimTalk assembly (fuzzy): {RimTalkAssembly.FullName}", "Patch");
+                else
+                    TTSLogger.ErrorNotify("未找到 RimTalk 程序集，请确认 RimTalk 已加载", "Patch");
             }
 
             if (RimTalkAssembly != null)
@@ -100,6 +102,24 @@ namespace RimTalkTTS.Simple.Patch
             lock (_blockLock) { blockedDialogues.Clear(); }
         }
 
+        private static object GetMemberValue(object obj, string name)
+        {
+            if (obj == null) return null;
+            var type = obj.GetType();
+            var field = type.GetField(name, BindingFlags.Public | BindingFlags.Instance);
+            if (field != null) return field.GetValue(obj);
+            var prop = type.GetProperty(name, BindingFlags.Public | BindingFlags.Instance);
+            if (prop != null) return prop.GetValue(obj, null);
+            return null;
+        }
+
+        private static T GetMemberValue<T>(object obj, string name)
+        {
+            var value = GetMemberValue(obj, name);
+            if (value is T t) return t;
+            return default;
+        }
+
         [HarmonyPatch]
         public static class CreateInteraction_Patch
         {
@@ -129,9 +149,7 @@ namespace RimTalkTTS.Simple.Patch
                     if (!TTSActive()) return true;
                     if (pawn == null || talk == null) return true;
 
-                    var idField = talk.GetType().GetField("Id");
-                    if (idField == null) return true;
-                    var dialogueId = (Guid)idField.GetValue(talk);
+                    var dialogueId = GetMemberValue<Guid>(talk, "Id");
 
                     if (Service.AudioPlaybackService.IsCurrentlyPlaying())
                         return false;
@@ -144,7 +162,11 @@ namespace RimTalkTTS.Simple.Patch
                     Service.AudioPlaybackService.PlayAudio(dialogueId, pawn, volume);
                     return true;
                 }
-                catch { return true; }
+                catch (Exception ex)
+                {
+                    TTSLogger.Error($"CreateInteraction: {ex}", "Patch");
+                    return true;
+                }
             }
         }
 
@@ -184,13 +206,8 @@ namespace RimTalkTTS.Simple.Patch
                     var item = list[list.Count - 1];
                     if (item == null) return;
 
-                    var idField = item.GetType().GetField("Id");
-                    var textField = item.GetType().GetField("Text");
-                    if (idField == null || textField == null) return;
-
-                    var dialogueId = (Guid)idField.GetValue(item);
-                    var text = textField.GetValue(item) as string;
-
+                    var dialogueId = GetMemberValue<Guid>(item, "Id");
+                    var text = GetMemberValue(item, "Text") as string;
                     if (string.IsNullOrEmpty(text)) return;
 
                     RequestBlock(dialogueId);
@@ -262,6 +279,7 @@ namespace RimTalkTTS.Simple.Patch
                 catch (Exception ex)
                 {
                     TTSLogger.Error($"TalkResponsesAdd: {ex}", "Patch");
+                    TTSLogger.WarningNotify($"对话拦截异常: {ex.Message}", "Patch");
                 }
             }
         }
@@ -293,10 +311,9 @@ namespace RimTalkTTS.Simple.Patch
                 try
                 {
                     if (pawn == null || __instance == null) return;
-                    var prop = __instance.GetType().GetProperty("TalkResponses", BindingFlags.Public | BindingFlags.Instance);
-                    if (prop != null)
+                    var list = GetMemberValue(__instance, "TalkResponses");
+                    if (list != null)
                     {
-                        var list = prop.GetValue(__instance);
                         _listToPawnMap.Remove(list);
                         _listToPawnMap.Add(list, pawn);
                     }
@@ -372,17 +389,11 @@ namespace RimTalkTTS.Simple.Patch
                     if (!TTSActive()) return;
                     if (__instance == null) return;
 
-                    var prop = __instance.GetType().GetProperty("TalkResponses", BindingFlags.Public | BindingFlags.Instance);
-                    if (prop == null) return;
-
-                    var list = prop.GetValue(__instance) as System.Collections.IList;
+                    var list = GetMemberValue(__instance, "TalkResponses") as System.Collections.IList;
                     if (list == null || list.Count == 0) return;
 
                     var item = list[0];
-                    var idField = item.GetType().GetField("Id");
-                    if (idField == null) return;
-
-                    var dialogueId = (Guid)idField.GetValue(item);
+                    var dialogueId = GetMemberValue<Guid>(item, "Id");
 
                     if (IsBlocked(dialogueId))
                     {
@@ -435,6 +446,7 @@ namespace RimTalkTTS.Simple.Patch
                 Service.TTSService.StopAll(false);
                 TTSStats.Reset();
                 TTSEventHistory.Clear();
+                TTSLogger.ClearNotificationDedup();
             }
         }
 
@@ -466,6 +478,39 @@ namespace RimTalkTTS.Simple.Patch
                 Service.TTSService.StopAll(false);
                 TTSStats.Reset();
                 TTSEventHistory.Clear();
+                TTSLogger.ClearNotificationDedup();
+            }
+        }
+
+        [HarmonyPatch(typeof(PlaySettings), nameof(PlaySettings.DoPlaySettingsGlobalControls))]
+        public static class TogglePatch
+        {
+            private static readonly Texture2D ToggleIcon = ContentFinder<Texture2D>.Get("UI/ToggleButton");
+
+            public static void Postfix(WidgetRow row, bool worldView)
+            {
+                if (worldView || row == null) return;
+
+                var settings = Data.TTSConfig.Settings;
+                if (settings == null) return;
+
+                bool onOff = settings.EnableTTS;
+                row.ToggleableIcon(ref onOff, ToggleIcon, "RimTalk TTS Simple",
+                    SoundDefOf.Mouseover_ButtonToggle);
+
+                if (onOff != settings.EnableTTS)
+                {
+                    settings.EnableTTS = onOff;
+                    settings.Write();
+
+                    string msg = onOff ? "RimTalk TTS 已开启" : "RimTalk TTS 已关闭";
+                    Messages.Message(msg, MessageTypeDefOf.TaskCompletion, false);
+
+                    if (!onOff)
+                    {
+                        Service.TTSService.StopAll(false);
+                    }
+                }
             }
         }
     }

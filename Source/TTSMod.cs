@@ -104,6 +104,7 @@ namespace RimTalkTTS.Simple
             {
                 TTSStats.Update();
             }
+            TTSLogger.FlushNotifications();
         }
     }
 }

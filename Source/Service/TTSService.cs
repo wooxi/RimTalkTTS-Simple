@@ -86,10 +86,14 @@ namespace RimTalkTTS.Simple.Service
             {
                 _edgeProvider?.Shutdown();
                 _mimoProvider?.Shutdown();
+                AudioPlaybackService.FullReset();
+            }
+            else
+            {
+                AudioPlaybackService.StopAndClear();
             }
 
             RimTalkPatches.ClearAllBlocks();
-            AudioPlaybackService.StopAndClear();
         }
     }
 }

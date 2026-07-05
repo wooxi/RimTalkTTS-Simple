@@ -28,7 +28,7 @@ namespace RimTalkTTS.Simple.Service
             {
                 if (string.IsNullOrEmpty(request.ApiKey))
                 {
-                    TTSLogger.Error("MiMo TTS: API Key not configured", "MiMo");
+                    TTSLogger.ErrorNotify("MiMo API Key 未配置，请在设置中填写 API Key", "MiMo");
                     return null;
                 }
 
@@ -73,7 +73,7 @@ namespace RimTalkTTS.Simple.Service
             }
             catch (Exception ex)
             {
-                TTSLogger.Error($"MiMo TTS: {ex.GetType().Name}: {ex.Message}", "MiMo");
+                TTSLogger.ErrorNotify($"MiMo TTS 异常: {ex.GetType().Name}: {ex.Message}", "MiMo");
                 return null;
             }
         }
@@ -85,7 +85,8 @@ namespace RimTalkTTS.Simple.Service
 
             if (!response.IsSuccessStatusCode)
             {
-                TTSLogger.Error($"MiMo TTS HTTP {response.StatusCode}: {responseJson.Substring(0, Math.Min(500, responseJson.Length))}", "MiMo");
+                string summary = responseJson.Length > 300 ? responseJson.Substring(0, 300) : responseJson;
+                TTSLogger.ErrorNotify($"MiMo HTTP {(int)response.StatusCode}: {summary}", "MiMo");
                 return null;
             }
 
@@ -93,7 +94,7 @@ namespace RimTalkTTS.Simple.Service
             var choices = obj["choices"] as JArray;
             if (choices == null || choices.Count == 0)
             {
-                TTSLogger.Error("MiMo TTS: No choices in response", "MiMo");
+                TTSLogger.WarningNotify("MiMo 响应无 choices", "MiMo");
                 return null;
             }
 
@@ -103,7 +104,7 @@ namespace RimTalkTTS.Simple.Service
 
             if (string.IsNullOrEmpty(data))
             {
-                TTSLogger.Error("MiMo TTS: No audio data in response", "MiMo");
+                TTSLogger.WarningNotify("MiMo 响应无音频数据", "MiMo");
                 return null;
             }
 
@@ -124,7 +125,8 @@ namespace RimTalkTTS.Simple.Service
             if (!response.IsSuccessStatusCode)
             {
                 string errorBody = await response.Content.ReadAsStringAsync();
-                TTSLogger.Error($"MiMo TTS stream: HTTP {response.StatusCode}: {errorBody.Substring(0, Math.Min(500, errorBody.Length))}", "MiMo");
+                string summary = errorBody.Length > 300 ? errorBody.Substring(0, 300) : errorBody;
+                TTSLogger.ErrorNotify($"MiMo 流式 HTTP {(int)response.StatusCode}: {summary}", "MiMo");
                 return null;
             }
 
@@ -165,7 +167,7 @@ namespace RimTalkTTS.Simple.Service
 
                 if (pcmChunks.Count == 0)
                 {
-                    TTSLogger.Error("MiMo TTS: No PCM data in stream", "MiMo");
+                    TTSLogger.WarningNotify("MiMo 流式: 未收到 PCM 数据", "MiMo");
                     return null;
                 }
 

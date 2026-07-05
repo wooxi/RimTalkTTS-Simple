@@ -1,7 +1,9 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
 using RimTalkTTS.Simple.Data;
 using RimTalkTTS.Simple.Patch;
+using RimTalkTTS.Simple.Service;
 using RimTalkTTS.Simple.Util;
 using UnityEngine;
 using Verse;
@@ -132,6 +134,10 @@ namespace RimTalkTTS.Simple.UI
 
                         if (audio != null && audio.Length > 0)
                         {
+                            _testResult = $"✅ 成功: {audio.Length / 1024}KB, {sw.ElapsedMilliseconds}ms (正在播放...)";
+                            var testId = Guid.NewGuid();
+                            Service.AudioPlaybackService.SetAudioResult(testId, audio);
+                            Service.AudioPlaybackService.PlayAudio(testId, null);
                             _testResult = $"✅ 成功: {audio.Length / 1024}KB, {sw.ElapsedMilliseconds}ms";
                         }
                         else

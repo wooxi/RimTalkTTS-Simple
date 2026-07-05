@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using RimTalkTTS.Simple.Patch;
+using RimTalkTTS.Simple.Util;
 using UnityEngine;
 using Verse;
 
@@ -102,12 +103,13 @@ namespace RimTalkTTS.Simple.Service
                 }
                 catch (Exception ex)
                 {
+                    TTSLogger.ErrorNotify($"音频播放异常: {ex.Message}", "Audio");
                     Log.Error($"[RimTalkTTS.Simple] PlayAudio exception: {ex}");
                 }
             }
             catch (Exception ex)
             {
-                Log.Error($"[RimTalkTTS.Simple] PlayAudio outer exception: {ex}");
+                TTSLogger.ErrorNotify($"音频播放致命异常: {ex.Message}", "Audio");
             }
             finally
             {
@@ -132,6 +134,11 @@ namespace RimTalkTTS.Simple.Service
                 _dialogueAudio.Clear();
                 _isPlaying = false;
             }
+        }
+
+        public static void FullReset()
+        {
+            StopAndClear();
         }
 
         public static void RemovePendingAudio(Guid dialogueId)

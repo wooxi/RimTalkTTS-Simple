@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Verse;
+using RimTalkTTS.Simple.Util;
 
 namespace RimTalkTTS.Simple.Service
 {
@@ -89,7 +90,7 @@ namespace RimTalkTTS.Simple.Service
                 }
             }
 
-            Log.Error("[RimTalkTTS.Simple] EdgeTTS: All attempts failed");
+            TTSLogger.ErrorNotify("Edge TTS: 所有重试均失败（已尝试 3 次）", "EdgeWS");
             return null;
         }
 
@@ -207,7 +208,8 @@ namespace RimTalkTTS.Simple.Service
                         if (message.Contains("Path:turn.end")) break;
                         if (message.Contains("Path:response") && message.Contains("error"))
                         {
-                            Log.Error($"[RimTalkTTS.Simple] EdgeTTS server error: {message}");
+                            TTSLogger.ErrorNotify($"Edge TTS 服务器错误", "EdgeWS");
+                            TTSLogger.Error($"Edge TTS server error: {message}", "EdgeWS");
                             throw new Exception($"Server error: {message}");
                         }
                     }

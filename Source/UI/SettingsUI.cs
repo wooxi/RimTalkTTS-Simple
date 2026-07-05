@@ -51,6 +51,10 @@ namespace RimTalkTTS.Simple.UI
 
             listing.Gap();
 
+            listing.CheckboxLabeled("游戏内通知 (错误/警告)", ref settings.EnableNotifications);
+
+            listing.Gap();
+
             float volume = settings.Volume;
             listing.Label($"音量: {volume:F1}");
             settings.Volume = listing.Slider(volume, 0f, 1f);

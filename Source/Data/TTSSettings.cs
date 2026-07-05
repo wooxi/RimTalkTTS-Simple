@@ -14,6 +14,7 @@ namespace RimTalkTTS.Simple.Data
         public TTSProvider Provider = TTSProvider.EdgeTTS;
         public bool EnableTTS = false;
         public bool EnableStreaming = false;
+        public bool EnableNotifications = true;
 
         public string MiMoApiKey = "";
         public string MiMoModel = "mimo-v2.5-tts";
@@ -70,6 +71,7 @@ namespace RimTalkTTS.Simple.Data
             base.ExposeData();
             Scribe_Values.Look(ref EnableTTS, "enableTTS", false);
             Scribe_Values.Look(ref EnableStreaming, "enableStreaming", false);
+            Scribe_Values.Look(ref EnableNotifications, "enableNotifications", true);
             Scribe_Values.Look(ref MiMoApiKey, "miMoApiKey", "");
             Scribe_Values.Look(ref MiMoModel, "miMoModel", "mimo-v2.5-tts");
             Scribe_Values.Look(ref MiMoVoice, "miMoVoice", "冰糖");
