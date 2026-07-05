@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using RimTalkTTS.Simple.Util;
 using Verse;
 
 namespace RimTalkTTS.Simple.Service
@@ -36,13 +37,13 @@ namespace RimTalkTTS.Simple.Service
 
                     if (audioData == null || audioData.Length == 0)
                     {
-                        Log.Warning("[RimTalkTTS.Simple] EdgeTTS: No audio data received");
+                        TTSLogger.Warning("EdgeTTS: No audio data received", "EdgeTTS");
                         return null;
                     }
 
                     if (Prefs.DevMode)
                     {
-                        Log.Message($"[RimTalkTTS.Simple] EdgeTTS: Generated {audioData.Length} bytes of audio");
+                        TTSLogger.Debug($"EdgeTTS: Generated {audioData.Length} bytes of audio", "EdgeTTS");
                     }
 
                     return audioData;
@@ -50,7 +51,7 @@ namespace RimTalkTTS.Simple.Service
             }
             catch (Exception ex)
             {
-                Log.Error($"[RimTalkTTS.Simple] EdgeTTS: {ex.GetType().Name}: {ex.Message}");
+                TTSLogger.Error($"EdgeTTS: {ex.GetType().Name}: {ex.Message}", "EdgeTTS");
                 return null;
             }
         }

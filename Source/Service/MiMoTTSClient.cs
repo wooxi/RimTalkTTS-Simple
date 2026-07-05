@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using RimTalkTTS.Simple.Util;
 using Verse;
 
 namespace RimTalkTTS.Simple.Service
@@ -27,7 +28,7 @@ namespace RimTalkTTS.Simple.Service
             {
                 if (string.IsNullOrEmpty(request.ApiKey))
                 {
-                    Log.Error("[RimTalkTTS.Simple] MiMo TTS: API Key not configured");
+                    TTSLogger.Error("MiMo TTS: API Key not configured", "MiMo");
                     return null;
                 }
 
@@ -72,7 +73,7 @@ namespace RimTalkTTS.Simple.Service
             }
             catch (Exception ex)
             {
-                Log.Error($"[RimTalkTTS.Simple] MiMo TTS: {ex.GetType().Name}: {ex.Message}");
+                TTSLogger.Error($"MiMo TTS: {ex.GetType().Name}: {ex.Message}", "MiMo");
                 return null;
             }
         }
@@ -84,7 +85,7 @@ namespace RimTalkTTS.Simple.Service
 
             if (!response.IsSuccessStatusCode)
             {
-                Log.Error($"[RimTalkTTS.Simple] MiMo TTS: HTTP {response.StatusCode}: {responseJson.Substring(0, Math.Min(500, responseJson.Length))}");
+                TTSLogger.Error($"MiMo TTS HTTP {response.StatusCode}: {responseJson.Substring(0, Math.Min(500, responseJson.Length))}", "MiMo");
                 return null;
             }
 
@@ -92,7 +93,7 @@ namespace RimTalkTTS.Simple.Service
             var choices = obj["choices"] as JArray;
             if (choices == null || choices.Count == 0)
             {
-                Log.Error("[RimTalkTTS.Simple] MiMo TTS: No choices in response");
+                TTSLogger.Error("MiMo TTS: No choices in response", "MiMo");
                 return null;
             }
 
@@ -102,7 +103,7 @@ namespace RimTalkTTS.Simple.Service
 
             if (string.IsNullOrEmpty(data))
             {
-                Log.Error("[RimTalkTTS.Simple] MiMo TTS: No audio data in response");
+                TTSLogger.Error("MiMo TTS: No audio data in response", "MiMo");
                 return null;
             }
 
@@ -110,7 +111,7 @@ namespace RimTalkTTS.Simple.Service
 
             if (Prefs.DevMode)
             {
-                Log.Message($"[RimTalkTTS.Simple] MiMo TTS: Generated {audioBytes.Length} bytes (non-stream)");
+                TTSLogger.Debug($"MiMo TTS generated {audioBytes.Length} bytes (non-stream)", "MiMo");
             }
 
             return audioBytes;
@@ -123,7 +124,7 @@ namespace RimTalkTTS.Simple.Service
             if (!response.IsSuccessStatusCode)
             {
                 string errorBody = await response.Content.ReadAsStringAsync();
-                Log.Error($"[RimTalkTTS.Simple] MiMo TTS stream: HTTP {response.StatusCode}: {errorBody.Substring(0, Math.Min(500, errorBody.Length))}");
+                TTSLogger.Error($"MiMo TTS stream: HTTP {response.StatusCode}: {errorBody.Substring(0, Math.Min(500, errorBody.Length))}", "MiMo");
                 return null;
             }
 
@@ -164,7 +165,7 @@ namespace RimTalkTTS.Simple.Service
 
                 if (pcmChunks.Count == 0)
                 {
-                    Log.Error("[RimTalkTTS.Simple] MiMo TTS: No PCM data in stream");
+                    TTSLogger.Error("MiMo TTS: No PCM data in stream", "MiMo");
                     return null;
                 }
 
@@ -180,7 +181,7 @@ namespace RimTalkTTS.Simple.Service
 
                 if (Prefs.DevMode)
                 {
-                    Log.Message($"[RimTalkTTS.Simple] MiMo TTS stream: {pcmChunks.Count} chunks, {totalPcmBytes} bytes PCM, {wavData.Length} bytes WAV");
+                    TTSLogger.Debug($"MiMo TTS stream: {pcmChunks.Count} chunks, {totalPcmBytes} bytes PCM, {wavData.Length} bytes WAV", "MiMo");
                 }
 
                 return wavData;

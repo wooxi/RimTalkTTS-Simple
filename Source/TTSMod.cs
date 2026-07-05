@@ -1,9 +1,11 @@
 using HarmonyLib;
 using System;
+using System.Linq;
 using System.Reflection;
 using RimTalkTTS.Simple.Data;
 using RimTalkTTS.Simple.Patch;
 using RimTalkTTS.Simple.Service;
+using RimTalkTTS.Simple.Util;
 using Verse;
 
 namespace RimTalkTTS.Simple
@@ -22,12 +24,39 @@ namespace RimTalkTTS.Simple
             {
                 var harmony = new Harmony("nitoritech.rimtalk.tts.simple");
                 harmony.PatchAll(Assembly.GetExecutingAssembly());
-                Log.Message("[RimTalkTTS.Simple] Harmony patches applied");
+                LogInitiStatus();
             }
             catch (Exception ex)
             {
-                Log.Error($"[RimTalkTTS.Simple] Failed to apply patches: {ex.Message}");
+                TTSLogger.Error($"Failed to apply patches: {ex.Message}");
             }
+        }
+
+        private void LogInitStatus()
+        {
+            TTSLogger.Info("========== TTS Module Initialized ==========");
+
+            var harmony = new Harmony("nitoritech.rimtalk.tts.simple");
+            var patched = harmony.GetPatchedMethods();
+            TTSLogger.Info($"Harmony patches applied: {patched?.Count() ?? 0}");
+            foreach (var m in patched)
+            {
+                TTSLogger.Info($"  Patched: {m.DeclaringType?.FullName}.{m.Name}");
+            }
+
+            // Check RimTalk types
+            var talkResponseType = Type.GetType("RimTalk.Data.TalkResponse, RimTalk");
+            TTSLogger.Info($"RimTalk.TalkResponse available: {(talkResponseType != null ? "YES" : "NO")}");
+
+            var talkServiceType = Type.GetType("RimTalk.Service.TalkService, RimTalk");
+            TTSLogger.Info($"RimTalk.TalkService available: {(talkServiceType != null ? "YES" : "NO")}");
+
+            // Check Persona hediff
+            var personaDef = DefDatabase<HediffDef>.GetNamedSilentFail("RimTalk_PersonaData");
+            TTSLogger.Info($"PersonaData hediff: {(personaDef != null ? "YES" : "NO")}");
+
+            TTSLogger.Info($"Provider: {_settings.Provider}, Enabled: {_settings.EnableTTS}");
+            TTSLogger.Info("=============================================");
         }
 
         public override string SettingsCategory()
@@ -67,5 +96,19 @@ namespace RimTalkTTS.Simple
         }
 
         public static bool IsActive => Instance?.IsActive ?? false;
+    }
+
+    [HarmonyPatch(typeof(TickManager), nameof(TickManager.DoSingleTick))]
+    public static class StatsTick_Patch
+    {
+        private static int _counter = 0;
+        static void Postfix()
+        {
+            _counter++;
+            if (_counter % 60 == 0)
+            {
+                TTSStats.Update();
+            }
+        }
     }
 }
