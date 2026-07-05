@@ -54,9 +54,4 @@
         <li>brrainz.harmony</li>
         <li>cj.rimtalk</li>
     </loadAfter>
-    <modTags>
-        <li>AI</li>
-        <li>TTS</li>
-        <li>Audio</li>
-    </modTags>
 </ModMetaData>
