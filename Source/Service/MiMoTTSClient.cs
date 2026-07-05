@@ -107,8 +107,21 @@ namespace RimTalkTTS.Simple.Service
                 return null;
             }
 
-            var message = choices[0]["message"];
-            var audio = message?["audio"];
+            var firstChoice = choices[0] as JObject;
+            if (firstChoice == null)
+            {
+                TTSLogger.WarningNotify("MiMo 响应格式异常：choices[0] 不是对象", "MiMo");
+                return null;
+            }
+
+            var message = firstChoice["message"] as JObject;
+            if (message == null)
+            {
+                TTSLogger.WarningNotify("MiMo 响应无 message 字段", "MiMo");
+                return null;
+            }
+
+            var audio = message["audio"] as JObject;
             var data = audio?["data"]?.ToString();
 
             if (string.IsNullOrEmpty(data))
@@ -160,9 +173,16 @@ namespace RimTalkTTS.Simple.Service
                         var choices = delta["choices"] as JArray;
                         if (choices == null || choices.Count == 0) continue;
 
-                        var deltaObj = choices[0]["delta"];
-                        var audio = deltaObj?["audio"];
-                        var audioData = audio?["data"]?.ToString();
+                        var firstChoice = choices[0] as JObject;
+                        if (firstChoice == null) continue;
+
+                        var deltaObj = firstChoice["delta"] as JObject;
+                        if (deltaObj == null) continue;
+
+                        var audio = deltaObj["audio"] as JObject;
+                        if (audio == null) continue;
+
+                        var audioData = audio["data"]?.ToString();
 
                         if (!string.IsNullOrEmpty(audioData))
                         {
