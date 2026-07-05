@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ModMetaData>
+    <packageId>nitoritech.rimtalk.tts.simple</packageId>
+    <name>RimTalk TTS Simple</name>
+    <author>Nitori_Tachyon</author>
+    <description>轻量级 TTS 语音合成模组，为 RimTalk 对话添加语音朗读功能。
+
+[url=https://github.com/whatismyname0/RimTalkTTS-Simple]GitHub[/url]
+
+仅支持两种 TTS 渠道：
+
+[h2]MiMo TTS (推荐)[/h2]
+使用小米 MiMo-V2.5-TTS API，支持预置音色并自动读取 RimTalk 角色人格作为音色描述。需要 API Key（目前官网免费）。
+
+[h2]Edge TTS (免费)[/h2]
+微软 Edge 免费 TTS，无需 API Key，开箱即用。
+
+[h2]特色功能[/h2]
+[list]
+[*]自动读取 RimTalk 分配的角色人格作为 MiMo 音色描述
+[*]支持流式/非流式输出切换
+[*]极简配置：选渠道、填 Key、选模型即可使用
+[*]每角色独立音色配置
+[*]可调节音量和语速
+[/list]
+
+[h2]前置要求[/h2]
+[list]
+[*]Harmony (brrainz.harmony)
+[*]RimTalk (cj.rimtalk)
+[/list]
+
+[h2]获取 MiMo API Key[/h2]
+访问 https://mimo.mi.com 注册并获取 API Key。目前语音合成功能限时免费。
+    </description>
+    <supportedVersions>
+        <li>1.6</li>
+    </supportedVersions>
+    <modDependencies>
+        <li>
+            <packageId>brrainz.harmony</packageId>
+            <displayName>Harmony</displayName>
+            <steamWorkshopUrl>steam://url/CommunityFilePage/2009463077</steamWorkshopUrl>
+            <downloadUrl>https://github.com/pardeike/HarmonyRimWorld/releases/latest</downloadUrl>
+        </li>
+        <li>
+            <packageId>cj.rimtalk</packageId>
+            <displayName>RimTalk</displayName>
+            <steamWorkshopUrl>steam://url/CommunityFilePage/3551203752</steamWorkshopUrl>
+            <downloadUrl>https://github.com/jlibrary/RimTalk/</downloadUrl>
+        </li>
+    </modDependencies>
+    <loadAfter>
+        <li>brrainz.harmony</li>
+        <li>cj.rimtalk</li>
+    </loadAfter>
+</ModMetaData>

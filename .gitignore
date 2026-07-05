@@ -1,0 +1,20 @@
+# Build output
+1.6/Assemblies/
+
+# IDE
+.vs/
+.idea/
+*.user
+*.suo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# NuGet
+packages/
+*.nupkg
+
+# Temp
+*.tmp
+*.temp
