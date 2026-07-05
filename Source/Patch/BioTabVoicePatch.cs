@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Reflection.Emit;
 using HarmonyLib;
 using RimTalkTTS.Simple.Data;
+using RimTalkTTS.Simple.UI;
 using RimWorld;
 using UnityEngine;
 using Verse;
