@@ -60,33 +60,38 @@ namespace RimTalkTTS.Simple.Patch
             }
         }
 
-        private static readonly (string label, Action action, Color color)[] Buttons = new[]
-        {
-            ("TTS 重置", () => {
-                Service.TTSService.StopAll(false);
-                Messages.Message("TTS 已重置", MessageTypeDefOf.TaskCompletion, false);
-            }, new Color(0.6f, 0.3f, 0.3f)),
-
-            ("TTS 测试", () => RunTestTTS(),
-                new Color(0.25f, 0.45f, 0.25f)),
-
-            ("强制对话", () => GenerateTalkForce(),
-                new Color(0.3f, 0.35f, 0.5f)),
-
-            ("忽略全部", () => IgnoreAllTalks(),
-                new Color(0.45f, 0.35f, 0.25f)),
+        private static readonly string[] BtnLabels = { "TTS 重置", "TTS 测试", "强制对话", "忽略全部" };
+        private static readonly Color[] BtnColors = {
+            new Color(0.6f, 0.3f, 0.3f),
+            new Color(0.25f, 0.45f, 0.25f),
+            new Color(0.3f, 0.35f, 0.5f),
+            new Color(0.45f, 0.35f, 0.25f),
         };
+
+        private static void ExecuteBtnAction(int idx)
+        {
+            switch (idx)
+            {
+                case 0:
+                    Service.TTSService.StopAll(false);
+                    Messages.Message("TTS 已重置", MessageTypeDefOf.TaskCompletion, false);
+                    break;
+                case 1: RunTestTTS(); break;
+                case 2: GenerateTalkForce(); break;
+                case 3: IgnoreAllTalks(); break;
+            }
+        }
 
         private static void DrawOverlayButtons(Rect gearRect)
         {
             float totalWidth = 0;
-            float[] widths = new float[Buttons.Length];
-            for (int i = 0; i < Buttons.Length; i++)
+            float[] widths = new float[BtnLabels.Length];
+            for (int i = 0; i < BtnLabels.Length; i++)
             {
-                widths[i] = Text.CalcSize(Buttons[i].label).x + BtnTextPadding * 2;
+                widths[i] = Text.CalcSize(BtnLabels[i]).x + BtnTextPadding * 2;
                 totalWidth += widths[i];
             }
-            totalWidth += (Buttons.Length - 1) * BtnPadding;
+            totalWidth += (BtnLabels.Length - 1) * BtnPadding;
 
             float x = gearRect.x - totalWidth;
             float y = gearRect.y;
@@ -94,14 +99,12 @@ namespace RimTalkTTS.Simple.Patch
             var prevColor = GUI.color;
             Text.Font = GameFont.Tiny;
 
-            for (int i = 0; i < Buttons.Length; i++)
+            for (int i = 0; i < BtnLabels.Length; i++)
             {
                 Rect btnRect = new Rect(x, y, widths[i], BtnHeight);
-                GUI.color = Buttons[i].color;
-
-                if (Widgets.ButtonText(btnRect, Buttons[i].label))
-                    Buttons[i].action();
-
+                GUI.color = BtnColors[i];
+                if (Widgets.ButtonText(btnRect, BtnLabels[i]))
+                    ExecuteBtnAction(i);
                 x += widths[i] + BtnPadding;
             }
 
