@@ -1,0 +1,33 @@
+[h1]RimTalk TTS Simple[/h1]
+轻量级 RimWorld TTS 语音合成模组，为 RimTalk 对话添加语音朗读。
+
+[h2]功能[/h2]
+[list]
+[*]Edge TTS（免费，无需 API Key）+ MiMo 2.5 TTS 双渠道
+[*]自动读取 RimTalk 角色人格作为 MiMo 音色描述
+[*]流式/非流式输出切换
+[*]可调音量和语速
+[*]极简配置：选渠道、填 Key、选模型即可
+[/list]
+
+[h2]前置要求[/h2]
+[list]
+[*][url=https://steamcommunity.com/sharedfiles/filedetails/?id=2009463077]Harmony[/url]
+[*][url=https://steamcommunity.com/sharedfiles/filedetails/?id=3551203752]RimTalk[/url]
+[/list]
+
+[h2]获取 MiMo API Key[/h2]
+访问 [url=https://mimo.mi.com]MiMo 官网[/url] 注册获取 API Key。目前语音合成功能限时免费。
+
+[h2]使用说明[/h2]
+[olist]
+[*]Mod 选项中启用 TTS
+[*]选择渠道（Edge TTS 或 MiMo TTS）
+[*]如选 MiMo，填入 API Key
+[*]选择模型和音色
+[*]开始游戏，殖民者对话将自动语音朗读
+[/olist]
+
+[b]GitHub:[/b] [url=https://github.com/wooxi/RimTalkTTS-Simple]wooxi/RimTalkTTS-Simple[/url]
+
+[b]原作者:[/b] Nitori_Tachyon（基于 RimTalkTTSModule 精简适配）
