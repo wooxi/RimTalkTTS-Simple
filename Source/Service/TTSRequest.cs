@@ -10,5 +10,6 @@ namespace RimTalkTTS.Simple.Service
         public float Speed { get; set; } = 1.0f;
         public float Volume { get; set; } = 1.0f;
         public bool EnableStreaming { get; set; } = false;
+        public string BaseUrl { get; set; }
     }
 }

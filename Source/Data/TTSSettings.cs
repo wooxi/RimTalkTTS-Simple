@@ -21,6 +21,11 @@ namespace RimTalkTTS.Simple.Data
         public string MiMoVoice = "冰糖";
         public string EdgeVoice = "zh-CN-XiaoxiaoNeural";
 
+        public bool UseCustomEndpoint = false;
+        public string CustomEndpointUrl = "";
+        public string CustomApiKey = "";
+        public string CustomModel = "";
+
         public float Volume = 0.8f;
         public float Speed = 1.0f;
 
@@ -79,6 +84,33 @@ namespace RimTalkTTS.Simple.Data
             Scribe_Values.Look(ref Volume, "volume", 0.8f);
             Scribe_Values.Look(ref Speed, "speed", 1.0f);
             Scribe_Values.Look(ref Provider, "provider", TTSProvider.EdgeTTS);
+            Scribe_Values.Look(ref UseCustomEndpoint, "useCustomEndpoint", false);
+            Scribe_Values.Look(ref CustomEndpointUrl, "customEndpointUrl", "");
+            Scribe_Values.Look(ref CustomApiKey, "customApiKey", "");
+            Scribe_Values.Look(ref CustomModel, "customModel", "");
+        }
+
+        public string GetEffectiveApiKey()
+        {
+            if (Provider == TTSProvider.MiMoTTS && UseCustomEndpoint && !string.IsNullOrWhiteSpace(CustomApiKey))
+                return CustomApiKey;
+            if (Provider == TTSProvider.MiMoTTS)
+                return MiMoApiKey;
+            return "";
+        }
+
+        public string GetEffectiveEndpointUrl()
+        {
+            if (Provider == TTSProvider.MiMoTTS && UseCustomEndpoint && !string.IsNullOrWhiteSpace(CustomEndpointUrl))
+                return CustomEndpointUrl;
+            return "https://api.xiaomimimo.com/v1/chat/completions";
+        }
+
+        public string GetEffectiveModel()
+        {
+            if (Provider == TTSProvider.MiMoTTS && UseCustomEndpoint && !string.IsNullOrWhiteSpace(CustomModel))
+                return CustomModel;
+            return MiMoModel;
         }
     }
 }

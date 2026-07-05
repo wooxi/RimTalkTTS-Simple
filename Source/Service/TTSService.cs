@@ -40,8 +40,8 @@ namespace RimTalkTTS.Simple.Service
             if (settings.Provider == TTSSettings.TTSProvider.MiMoTTS)
             {
                 voice = perPawnVoice != PawnVoiceManager.DEFAULT ? perPawnVoice : settings.MiMoVoice;
-                model = settings.MiMoModel;
-                apiKey = settings.MiMoApiKey;
+                model = settings.GetEffectiveModel();
+                apiKey = settings.GetEffectiveApiKey();
             }
             else
             {
@@ -57,7 +57,8 @@ namespace RimTalkTTS.Simple.Service
                 Persona = persona,
                 Speed = settings.Speed,
                 Volume = settings.Volume,
-                EnableStreaming = settings.EnableStreaming
+                EnableStreaming = settings.EnableStreaming,
+                BaseUrl = settings.GetEffectiveEndpointUrl()
             };
 
             return await provider.GenerateSpeechAsync(request);

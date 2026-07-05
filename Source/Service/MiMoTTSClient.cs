@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using RimTalkTTS.Simple.Data;
 using RimTalkTTS.Simple.Util;
 using Verse;
 
@@ -13,7 +14,7 @@ namespace RimTalkTTS.Simple.Service
 {
     public static class MiMoTTSClient
     {
-        private const string MIMO_API_URL = "https://api.xiaomimimo.com/v1/chat/completions";
+        private const string DEFAULT_API_URL = "https://api.xiaomimimo.com/v1/chat/completions";
         private static readonly HttpClient _httpClient;
 
         static MiMoTTSClient()
@@ -31,6 +32,8 @@ namespace RimTalkTTS.Simple.Service
                     TTSLogger.ErrorNotify("MiMo API Key 未配置，请在设置中填写 API Key", "MiMo");
                     return null;
                 }
+
+                string apiUrl = string.IsNullOrWhiteSpace(request.BaseUrl) ? DEFAULT_API_URL : request.BaseUrl;
 
                 string personaPrompt = string.IsNullOrEmpty(request.Persona)
                     ? "Use a natural, clear speaking voice."
@@ -65,7 +68,7 @@ namespace RimTalkTTS.Simple.Service
 
                 TTSLogger.Info($"MiMo 请求: model={request.Model} isVoiceDesign={isVoiceDesign} streaming={streaming}", "MiMo");
                 TTSLogger.Debug($"MiMo JSON: {json.Substring(0, Math.Min(500, json.Length))}", "MiMo");
-                var httpRequest = new HttpRequestMessage(HttpMethod.Post, MIMO_API_URL)
+                var httpRequest = new HttpRequestMessage(HttpMethod.Post, apiUrl)
                 {
                     Content = new StringContent(json, Encoding.UTF8, "application/json")
                 };
@@ -245,6 +248,99 @@ namespace RimTalkTTS.Simple.Service
 
                 return ms.ToArray();
             }
+        }
+
+        public static async Task<Data.EndpointTestResult> TestEndpointAsync(string url, string apiKey, string model, string voice)
+        {
+            var result = new Data.EndpointTestResult
+            {
+                RequestUrl = url,
+                Success = false
+            };
+
+            try
+            {
+                var payload = new JObject
+                {
+                    ["model"] = string.IsNullOrWhiteSpace(model) ? "mimo-v2.5-tts" : model,
+                    ["messages"] = new JArray
+                    {
+                        new JObject { ["role"] = "user", ["content"] = "Use a natural voice." },
+                        new JObject { ["role"] = "assistant", ["content"] = "Endpoint test." }
+                    },
+                    ["audio"] = new JObject
+                    {
+                        ["format"] = "wav",
+                        ["voice"] = string.IsNullOrWhiteSpace(voice) ? "冰糖" : voice
+                    },
+                    ["stream"] = false
+                };
+
+                string json = JsonConvert.SerializeObject(payload);
+                result.RequestJson = json;
+
+                var httpRequest = new HttpRequestMessage(HttpMethod.Post, url)
+                {
+                    Content = new StringContent(json, Encoding.UTF8, "application/json")
+                };
+                httpRequest.Headers.Add("api-key", apiKey);
+
+                var sw = System.Diagnostics.Stopwatch.StartNew();
+                var response = await _httpClient.SendAsync(httpRequest);
+                sw.Stop();
+
+                result.LatencyMs = sw.ElapsedMilliseconds;
+                result.HttpStatusCode = (int)response.StatusCode;
+
+                string responseJson = await response.Content.ReadAsStringAsync();
+                result.ResponseJson = responseJson.Length > 2000
+                    ? responseJson.Substring(0, 2000) + "...(truncated)"
+                    : responseJson;
+
+                if (response.IsSuccessStatusCode)
+                {
+                    try
+                    {
+                        var obj = JObject.Parse(responseJson);
+                        var choices = obj["choices"] as JArray;
+                        if (choices != null && choices.Count > 0)
+                        {
+                            var first = choices[0] as JObject;
+                            var msg = first?["message"] as JObject;
+                            var audio = msg?["audio"] as JObject;
+                            var data = audio?["data"]?.ToString();
+                            if (!string.IsNullOrEmpty(data))
+                            {
+                                byte[] audioBytes = Convert.FromBase64String(data);
+                                result.AudioSizeBytes = audioBytes.Length;
+                                result.Success = true;
+                            }
+                            else
+                            {
+                                result.ErrorMessage = "响应中无音频数据";
+                            }
+                        }
+                        else
+                        {
+                            result.ErrorMessage = "响应中无 choices";
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        result.ErrorMessage = $"解析响应失败: {ex.Message}";
+                    }
+                }
+                else
+                {
+                    result.ErrorMessage = $"HTTP {(int)response.StatusCode}";
+                }
+            }
+            catch (Exception ex)
+            {
+                result.ErrorMessage = $"请求失败: {ex.Message}";
+            }
+
+            return result;
         }
     }
 }
