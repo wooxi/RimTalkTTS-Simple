@@ -62,6 +62,9 @@ namespace RimTalkTTS.Simple.Service
                 };
 
                 string json = JsonConvert.SerializeObject(payload);
+
+                TTSLogger.Info($"MiMo 请求: model={request.Model} isVoiceDesign={isVoiceDesign} streaming={streaming}", "MiMo");
+                TTSLogger.Debug($"MiMo JSON: {json.Substring(0, Math.Min(500, json.Length))}", "MiMo");
                 var httpRequest = new HttpRequestMessage(HttpMethod.Post, MIMO_API_URL)
                 {
                     Content = new StringContent(json, Encoding.UTF8, "application/json")
