@@ -1,6 +1,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using RimTalkTTS.Simple.Data;
+using RimTalkTTS.Simple.Patch;
 using RimTalkTTS.Simple.Util;
 using UnityEngine;
 using Verse;
@@ -67,7 +68,41 @@ namespace RimTalkTTS.Simple.UI
                 ? settings.EdgeVoice
                 : settings.MiMoVoice;
             listing.Label($"音色: {voice}");
-            listing.Label($"流式输出: {(settings.EnableStreaming ? "开启" : "关闭")}");
+
+            listing.Gap();
+            listing.Label("=== RimTalk 连接 ===");
+            RimTalkPatches.ResolveRimTalkTypes();
+
+            string asm = RimTalkPatches.RimTalkAssembly != null ?
+                $"✅ {RimTalkPatches.RimTalkAssembly.GetName().Name}" : "❌ 未找到";
+
+            listing.Label($"RimTalk 程序集: {asm}");
+            listing.Label($"TalkResponse: {(RimTalkPatches.TalkResponseType != null ? "✅" : "❌")}");
+            listing.Label($"PawnState:    {(RimTalkPatches.PawnStateType != null ? "✅" : "❌")}");
+            listing.Label($"TalkHistory:  {(RimTalkPatches.TalkHistoryType != null ? "✅" : "❌")}");
+            listing.Label($"TalkService:  {(RimTalkPatches.TalkServiceType != null ? "✅" : "❌")}");
+            listing.Label($"RimTalk main: {(RimTalkPatches.RimTalkMainType != null ? "✅" : "❌")}");
+
+            listing.Gap();
+            listing.Label("=== Patch 状态 ===");
+            try
+            {
+                var harmony = new HarmonyLib.Harmony("nitoritech.rimtalk.tts.simple");
+                var methods = harmony.GetPatchedMethods().ToList();
+                if (methods.Any())
+                {
+                    foreach (var m in methods)
+                        listing.Label($"  ✅ {m.DeclaringType?.Name}.{m.Name}");
+                }
+                else
+                {
+                    listing.Label("  ⚠️ 没有已激活的 patch");
+                }
+            }
+            catch
+            {
+                listing.Label("  ⚠️ 无法读取 Harmony 状态");
+            }
         }
 
         private static void DrawTestButton(Listing_Standard listing, TTSSettings settings)

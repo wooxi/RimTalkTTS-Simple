@@ -38,20 +38,15 @@ namespace RimTalkTTS.Simple
 
             var harmony = new Harmony("nitoritech.rimtalk.tts.simple");
             var patched = harmony.GetPatchedMethods();
-            TTSLogger.Info($"Harmony patches applied: {patched?.Count() ?? 0}");
+            TTSLogger.Info($"Harmony patches applied: {patched.Count()}");
             foreach (var m in patched)
             {
                 TTSLogger.Info($"  Patched: {m.DeclaringType?.FullName}.{m.Name}");
             }
 
-            // Check RimTalk types
-            var talkResponseType = Type.GetType("RimTalk.Data.TalkResponse, RimTalk");
-            TTSLogger.Info($"RimTalk.TalkResponse available: {(talkResponseType != null ? "YES" : "NO")}");
+            RimTalkPatches.ResolveRimTalkTypes();
+            TTSLogger.Info($"RimTalk assembly: {(RimTalkPatches.RimTalkAssembly != null ? RimTalkPatches.RimTalkAssembly.GetName().Name : "NOT FOUND")}");
 
-            var talkServiceType = Type.GetType("RimTalk.Service.TalkService, RimTalk");
-            TTSLogger.Info($"RimTalk.TalkService available: {(talkServiceType != null ? "YES" : "NO")}");
-
-            // Check Persona hediff
             var personaDef = DefDatabase<HediffDef>.GetNamedSilentFail("RimTalk_PersonaData");
             TTSLogger.Info($"PersonaData hediff: {(personaDef != null ? "YES" : "NO")}");
 
