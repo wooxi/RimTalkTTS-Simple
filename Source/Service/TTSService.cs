@@ -1,4 +1,5 @@
 using System;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using RimTalkTTS.Simple.Data;
 using RimTalkTTS.Simple.Provider;
@@ -13,8 +14,18 @@ namespace RimTalkTTS.Simple.Service
         private static ITTSProvider _edgeProvider = new EdgeTTSProvider();
         private static ITTSProvider _mimoProvider = new MiMoTTSProvider();
 
+        private static readonly Regex RichTextPattern = new Regex(@"<[^>]*>", RegexOptions.Compiled);
+
+        public static string StripRichTextTags(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return text;
+            return RichTextPattern.Replace(text, "").Trim();
+        }
+
         public static async Task<byte[]> GenerateSpeechAsync(string text, string persona, Pawn pawn, TTSSettings settings)
         {
+            text = StripRichTextTags(text);
+            if (string.IsNullOrEmpty(text)) return null;
             ITTSProvider provider = settings.Provider == TTSSettings.TTSProvider.MiMoTTS
                 ? _mimoProvider
                 : _edgeProvider;
