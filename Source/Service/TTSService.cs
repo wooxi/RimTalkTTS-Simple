@@ -13,7 +13,7 @@ namespace RimTalkTTS.Simple.Service
         private static ITTSProvider _edgeProvider = new EdgeTTSProvider();
         private static ITTSProvider _mimoProvider = new MiMoTTSProvider();
 
-        public static async Task<byte[]> GenerateSpeechAsync(string text, string persona, TTSSettings settings)
+        public static async Task<byte[]> GenerateSpeechAsync(string text, string persona, Pawn pawn, TTSSettings settings)
         {
             ITTSProvider provider = settings.Provider == TTSSettings.TTSProvider.MiMoTTS
                 ? _mimoProvider
@@ -23,15 +23,18 @@ namespace RimTalkTTS.Simple.Service
             string model = null;
             string apiKey = "";
 
+            string perPawnVoice = PawnVoiceManager.GetVoiceModel(pawn);
+            if (perPawnVoice == PawnVoiceManager.NONE) return null;
+
             if (settings.Provider == TTSSettings.TTSProvider.MiMoTTS)
             {
-                voice = settings.MiMoVoice;
+                voice = perPawnVoice != PawnVoiceManager.DEFAULT ? perPawnVoice : settings.MiMoVoice;
                 model = settings.MiMoModel;
                 apiKey = settings.MiMoApiKey;
             }
             else
             {
-                voice = settings.EdgeVoice;
+                voice = perPawnVoice != PawnVoiceManager.DEFAULT ? perPawnVoice : settings.EdgeVoice;
             }
 
             var request = new TTSRequest

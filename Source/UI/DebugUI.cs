@@ -84,6 +84,9 @@ namespace RimTalkTTS.Simple.UI
             listing.Label($"TalkHistory:  {(RimTalkPatches.TalkHistoryType != null ? "✅" : "❌")}");
             listing.Label($"TalkService:  {(RimTalkPatches.TalkServiceType != null ? "✅" : "❌")}");
             listing.Label($"RimTalk main: {(RimTalkPatches.RimTalkMainType != null ? "✅" : "❌")}");
+            listing.Label($"Overlay:      {(RimTalkPatches.OverlayType != null ? "✅" : "❌")}");
+            listing.Label($"Cache:        {(RimTalkPatches.CacheType != null ? "✅" : "❌")}");
+            listing.Label($"TalkRequest:  {(RimTalkPatches.TalkRequestType != null ? "✅" : "❌")}");
 
             listing.Gap();
             listing.Label("=== Patch 状态 ===");
@@ -129,7 +132,7 @@ namespace RimTalkTTS.Simple.UI
                         string persona = "使用自然清晰的语音风格。";
 
                         var sw = System.Diagnostics.Stopwatch.StartNew();
-                        byte[] audio = await Service.TTSService.GenerateSpeechAsync(testText, persona, settings);
+                        byte[] audio = await Service.TTSService.GenerateSpeechAsync(testText, persona, null, settings);
                         sw.Stop();
 
                         if (audio != null && audio.Length > 0)

@@ -37,22 +37,28 @@ namespace RimTalkTTS.Simple.Service
                     : request.Persona;
 
                 bool streaming = request.EnableStreaming;
+                bool isVoiceDesign = (request.Model ?? "").Contains("voicedesign");
                 string audioFormat = streaming ? "pcm16" : "wav";
 
-                var payload = new
+                var audioObj = new JObject
                 {
-                    model = request.Model ?? "mimo-v2.5-tts",
-                    messages = new object[]
+                    ["format"] = audioFormat
+                };
+                if (!isVoiceDesign)
+                {
+                    audioObj["voice"] = request.Voice ?? "冰糖";
+                }
+
+                var payload = new JObject
+                {
+                    ["model"] = request.Model ?? "mimo-v2.5-tts",
+                    ["messages"] = new JArray
                     {
-                        new { role = "user", content = personaPrompt },
-                        new { role = "assistant", content = request.Input }
+                        new JObject { ["role"] = "user", ["content"] = personaPrompt },
+                        new JObject { ["role"] = "assistant", ["content"] = request.Input }
                     },
-                    audio = new
-                    {
-                        format = audioFormat,
-                        voice = request.Voice ?? "冰糖"
-                    },
-                    stream = streaming
+                    ["audio"] = audioObj,
+                    ["stream"] = streaming
                 };
 
                 string json = JsonConvert.SerializeObject(payload);

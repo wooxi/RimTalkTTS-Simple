@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
+using RimTalkTTS.Simple.Data;
 using RimTalkTTS.Simple.Util;
 using RimWorld;
 using UnityEngine;
@@ -24,6 +25,10 @@ namespace RimTalkTTS.Simple.Patch
         public static Type TalkHistoryType;
         public static Type TalkServiceType;
         public static Type RimTalkMainType;
+        public static Type OverlayType;
+        public static Type CacheType;
+        public static Type TalkRequestType;
+        public static Type TalkTypeType;
         public static bool TypesResolved;
 
         public static void ResolveRimTalkTypes()
@@ -57,12 +62,19 @@ namespace RimTalkTTS.Simple.Patch
                 TalkHistoryType = RimTalkAssembly.GetType("RimTalk.Data.TalkHistory");
                 TalkServiceType = RimTalkAssembly.GetType("RimTalk.Service.TalkService");
                 RimTalkMainType = RimTalkAssembly.GetType("RimTalk.RimTalk");
+                OverlayType = RimTalkAssembly.GetType("RimTalk.UI.Overlay");
+                CacheType = RimTalkAssembly.GetType("RimTalk.Data.Cache");
+                TalkRequestType = RimTalkAssembly.GetType("RimTalk.Data.TalkRequest");
+                TalkTypeType = RimTalkAssembly.GetType("RimTalk.Data.TalkType");
 
                 TTSLogger.Info($"TalkResponse: {(TalkResponseType != null ? "OK" : "MISSING")}", "Patch");
                 TTSLogger.Info($"PawnState: {(PawnStateType != null ? "OK" : "MISSING")}", "Patch");
                 TTSLogger.Info($"TalkHistory: {(TalkHistoryType != null ? "OK" : "MISSING")}", "Patch");
                 TTSLogger.Info($"TalkService: {(TalkServiceType != null ? "OK" : "MISSING")}", "Patch");
                 TTSLogger.Info($"RimTalk: {(RimTalkMainType != null ? "OK" : "MISSING")}", "Patch");
+                TTSLogger.Info($"Overlay: {(OverlayType != null ? "OK" : "MISSING")}", "Patch");
+                TTSLogger.Info($"Cache: {(CacheType != null ? "OK" : "MISSING")}", "Patch");
+                TTSLogger.Info($"TalkRequest: {(TalkRequestType != null ? "OK" : "MISSING")}", "Patch");
             }
             else
             {
@@ -100,6 +112,24 @@ namespace RimTalkTTS.Simple.Patch
         public static void ClearAllBlocks()
         {
             lock (_blockLock) { blockedDialogues.Clear(); }
+        }
+
+        private static void RegisterVoiceGameComponent()
+        {
+            try
+            {
+                if (Current.Game == null) return;
+                var comp = Current.Game.GetComponent<Data.PawnVoiceGameComponent>();
+                if (comp == null)
+                {
+                    Current.Game.components.Add(new Data.PawnVoiceGameComponent(Current.Game));
+                    TTSLogger.Info("PawnVoiceGameComponent registered", "Lifecycle");
+                }
+            }
+            catch (Exception ex)
+            {
+                TTSLogger.Error($"RegisterVoiceGameComponent: {ex.Message}", "Lifecycle");
+            }
         }
 
         private static object GetMemberValue(object obj, string name)
@@ -210,6 +240,8 @@ namespace RimTalkTTS.Simple.Patch
                     var text = GetMemberValue(item, "Text") as string;
                     if (string.IsNullOrEmpty(text)) return;
 
+                    if (Data.PawnVoiceManager.GetVoiceModel(pawn) == Data.PawnVoiceManager.NONE) return;
+
                     RequestBlock(dialogueId);
 
                     var settings = Data.TTSConfig.Settings;
@@ -237,7 +269,7 @@ namespace RimTalkTTS.Simple.Patch
                         try
                         {
                             TTSStats.RecordRequest();
-                            byte[] audio = await Service.TTSService.GenerateSpeechAsync(text, persona, settings);
+                            byte[] audio = await Service.TTSService.GenerateSpeechAsync(text, persona, pawn, settings);
                             sw.Stop();
 
                             if (audio != null && audio.Length > 0)
@@ -443,10 +475,12 @@ namespace RimTalkTTS.Simple.Patch
             static void Postfix()
             {
                 TTSLogger.Info("New game, resetting TTS", "Lifecycle");
+                Data.PawnVoiceManager.Clear();
                 Service.TTSService.StopAll(false);
                 TTSStats.Reset();
                 TTSEventHistory.Clear();
                 TTSLogger.ClearNotificationDedup();
+                RegisterVoiceGameComponent();
             }
         }
 
@@ -475,10 +509,12 @@ namespace RimTalkTTS.Simple.Patch
             static void Postfix()
             {
                 TTSLogger.Info("Game loaded, resetting TTS", "Lifecycle");
+                Data.PawnVoiceManager.Clear();
                 Service.TTSService.StopAll(false);
                 TTSStats.Reset();
                 TTSEventHistory.Clear();
                 TTSLogger.ClearNotificationDedup();
+                RegisterVoiceGameComponent();
             }
         }
 

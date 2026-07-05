@@ -104,8 +104,17 @@ namespace RimTalkTTS.Simple.UI
 
             listing.Gap();
 
-            DrawDropdown(listing, "音色", settings.MiMoVoice, TTSSettings.GetMiMoVoices(),
-                v => settings.MiMoVoice = v);
+            bool isVoiceDesign = (settings.MiMoModel ?? "").Contains("voicedesign");
+
+            if (!isVoiceDesign)
+            {
+                DrawDropdown(listing, "音色", settings.MiMoVoice, TTSSettings.GetMiMoVoices(),
+                    v => settings.MiMoVoice = v);
+            }
+            else
+            {
+                listing.Label("音色: 由人格描述自动设计 (Voice Design 模式)");
+            }
 
             listing.Gap();
             listing.Label("提示：模组会自动读取 RimTalk 分配的角色人格作为音色描述");
