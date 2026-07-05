@@ -24,7 +24,7 @@ namespace RimTalkTTS.Simple
             {
                 var harmony = new Harmony("nitoritech.rimtalk.tts.simple");
                 harmony.PatchAll(Assembly.GetExecutingAssembly());
-                LogInitiStatus();
+                LogInitStatus();
             }
             catch (Exception ex)
             {

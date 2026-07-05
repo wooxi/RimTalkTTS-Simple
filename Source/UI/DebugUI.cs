@@ -19,7 +19,7 @@ namespace RimTalkTTS.Simple.UI
         {
             listing.GapLine();
 
-            _showDebug = listing.CheckboxLabeled("调试面板", _showDebug);
+            listing.CheckboxLabeled("调试面板", ref _showDebug);
 
             if (!_showDebug) return;
 
@@ -144,7 +144,7 @@ namespace RimTalkTTS.Simple.UI
 
         private static void DrawEventLog(Listing_Standard listing)
         {
-            _showEvents = listing.CheckboxLabeled($"事件日志 (共{TTSEventHistory.GetAll().Count}条)", _showEvents);
+            listing.CheckboxLabeled($"事件日志 (共{TTSEventHistory.GetAll().Count}条)", ref _showEvents);
 
             if (!_showEvents) return;
 
