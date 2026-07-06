@@ -2,8 +2,8 @@ name: Build and Release
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches:
+      - main
 
 permissions:
   contents: write
@@ -15,6 +15,25 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get latest tag and increment
+        id: tag
+        shell: pwsh
+        run: |
+          $latest = git describe --tags --abbrev=0 2>$null
+          if (-not $latest) { $latest = "v1.0.0" }
+          Write-Host "Latest tag: $latest"
+
+          $version = $latest -replace '^v', ''
+          $parts = $version.Split('.')
+          $newPatch = [int]$parts[2] + 1
+          $newVersion = "v$($parts[0]).$($parts[1]).$newPatch"
+          Write-Host "New version: $newVersion"
+
+          echo "VERSION=$newVersion" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "VERSION_NUM=$($parts[0]).$($parts[1]).$newPatch" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -29,15 +48,22 @@ jobs:
 
       - name: Create Mod Package
         run: |
-          $version = "${{ github.ref_name }}" -replace '^v', ''
-          $zipName = "RimTalkTTS-Simple-v$version.zip"
+          $zipName = "RimTalkTTS-Simple-$env:VERSION_NUM.zip"
           Compress-Archive -Path About,1.6,Languages,Textures,LICENSE,README.md -DestinationPath $zipName
-          echo "zipName=$zipName" >> $env:GITHUB_ENV
+          echo "ZIPNAME=$zipName" >> $env:GITHUB_ENV
+
+      - name: Create tag
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag $env:VERSION
+          git push origin $env:VERSION
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: RimTalkTTS-Simple-v*.zip
+          tag_name: ${{ env.VERSION }}
+          files: ${{ env.ZIPNAME }}
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
