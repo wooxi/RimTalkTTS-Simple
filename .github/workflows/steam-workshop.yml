@@ -1,0 +1,43 @@
+name: Publish to Steam Workshop
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish-workshop:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup SteamCMD
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq steamcmd
+
+      - name: Prepare Workshop Content
+        run: |
+          mkdir -p workshop/rimtalktts-simple
+          cp -r About workshop/rimtalktts-simple/
+          cp -r 1.6 workshop/rimtalktts-simple/
+          cp -r Languages workshop/rimtalktts-simple/
+          cp -r Textures workshop/rimtalktts-simple/
+          cp README.md workshop/rimtalktts-simple/
+
+      - name: Upload to Steam Workshop
+        run: |
+          VERSION=$(echo "${{ github.ref_name }}" | sed 's/^v//')
+          cat <<EOF > workshop.vdf
+          "workshopitem"
+          {
+            "appid"            "294100"
+            "publishedfileid"  "${{ secrets.STEAM_WORKSHOP_ID }}"
+            "contentfolder"    "$(pwd)/workshop/rimtalktts-simple"
+            "changenote"       "v${VERSION}: ${{ github.event.head_commit.message }}"
+          }
+          EOF
+
+          steamcmd +login ${{ secrets.STEAM_USERNAME }} ${{ secrets.STEAM_PASSWORD }} ${{ secrets.STEAM_GUARD_CODE }} +workshop_build_item $(pwd)/workshop.vdf +quit

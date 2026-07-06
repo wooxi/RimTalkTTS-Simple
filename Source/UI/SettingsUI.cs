@@ -79,11 +79,6 @@ namespace RimTalkTTS.Simple.UI
             listing.Label($"语速: {speed:F1}");
             settings.Speed = listing.Slider(speed, 0.25f, 2f);
 
-            listing.Gap();
-            listing.GapLine();
-
-            DebugUI.DrawDebugSection(listing, settings);
-
             listing.End();
         }
 

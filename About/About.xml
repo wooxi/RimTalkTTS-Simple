@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ModMetaData>
     <packageId>nitoritech.rimtalk.tts.simple</packageId>
-    <name>RimTalk TTS Simple</name>
+    <name>Rimtalk-tts(simple)</name>
     <author>Nitori_Tachyon</author>
     <description>轻量级 TTS 语音合成模组，为 RimTalk 对话添加语音朗读功能。
 
