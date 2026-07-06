@@ -32,8 +32,8 @@ jobs:
           $newVersion = "v$($parts[0]).$($parts[1]).$newPatch"
           Write-Host "New version: $newVersion"
 
-          echo "VERSION=$newVersion" | Out-File -FilePath $env:GITHUB_ENV -Append
-          echo "VERSION_NUM=$($parts[0]).$($parts[1]).$newPatch" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "NEW_TAG=$newVersion" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "NEW_VERSION=$($parts[0]).$($parts[1]).$newPatch" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -48,7 +48,7 @@ jobs:
 
       - name: Create Mod Package
         run: |
-          $zipName = "RimTalkTTS-Simple-$env:VERSION_NUM.zip"
+          $zipName = "RimTalkTTS-Simple-$env:NEW_VERSION.zip"
           Compress-Archive -Path About,1.6,Languages,Textures,LICENSE,README.md -DestinationPath $zipName
           echo "ZIPNAME=$zipName" >> $env:GITHUB_ENV
 
@@ -56,13 +56,13 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag $env:VERSION
-          git push origin $env:VERSION
+          git tag $env:NEW_TAG
+          git push origin $env:NEW_TAG
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ env.VERSION }}
+          tag_name: ${{ env.NEW_TAG }}
           files: ${{ env.ZIPNAME }}
           generate_release_notes: true
         env:
