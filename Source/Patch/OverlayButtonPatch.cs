@@ -60,12 +60,13 @@ namespace RimTalkTTS.Simple.Patch
             }
         }
 
-        private static readonly string[] BtnLabels = { "TTS 重置", "TTS 测试", "强制对话", "忽略全部" };
+        private static readonly string[] BtnLabels = { "TTS 重置", "TTS 测试", "强制对话", "忽略全部", "TTS 调试" };
         private static readonly Color[] BtnColors = {
             new Color(0.6f, 0.3f, 0.3f),
             new Color(0.25f, 0.45f, 0.25f),
             new Color(0.3f, 0.35f, 0.5f),
             new Color(0.45f, 0.35f, 0.25f),
+            new Color(0.35f, 0.3f, 0.5f),
         };
 
         private static void ExecuteBtnAction(int idx)
@@ -79,6 +80,10 @@ namespace RimTalkTTS.Simple.Patch
                 case 1: RunTestTTS(); break;
                 case 2: GenerateTalkForce(); break;
                 case 3: IgnoreAllTalks(); break;
+                case 4:
+                    RimTalkTTS.Simple.UI.TTSDebugWindow window = new RimTalkTTS.Simple.UI.TTSDebugWindow();
+                    Find.WindowStack.Add(window);
+                    break;
             }
         }
 

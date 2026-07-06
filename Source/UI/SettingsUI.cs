@@ -108,12 +108,15 @@ namespace RimTalkTTS.Simple.UI
 
         private static void DrawMiMoSettings(Listing_Standard listing, TTSSettings settings)
         {
-            listing.Label("API Key (从 https://mimo.mi.com 获取)");
-            string newKey = listing.TextEntry(_miMoApiKeyBuffer, 3);
-            if (newKey != _miMoApiKeyBuffer)
+            if (!settings.UseCustomEndpoint)
             {
-                _miMoApiKeyBuffer = newKey;
-                settings.MiMoApiKey = newKey;
+                listing.Label("API Key (从 https://mimo.mi.com 获取)");
+                string newKey = listing.TextEntry(_miMoApiKeyBuffer, 1);
+                if (newKey != _miMoApiKeyBuffer)
+                {
+                    _miMoApiKeyBuffer = newKey;
+                    settings.MiMoApiKey = newKey;
+                }
             }
 
             listing.Gap();
@@ -148,7 +151,7 @@ namespace RimTalkTTS.Simple.UI
             }
 
             listing.Label("端点地址 (完整 URL)");
-            string newUrl = listing.TextEntry(_customEndpointBuffer, 2);
+            string newUrl = listing.TextEntry(_customEndpointBuffer, 1);
             if (newUrl != _customEndpointBuffer)
             {
                 _customEndpointBuffer = newUrl;
@@ -156,7 +159,7 @@ namespace RimTalkTTS.Simple.UI
             }
 
             listing.Label("API Key (留空则使用上方 MiMo Key)");
-            string newCustomKey = listing.TextEntry(_customApiKeyBuffer, 3);
+            string newCustomKey = listing.TextEntry(_customApiKeyBuffer, 1);
             if (newCustomKey != _customApiKeyBuffer)
             {
                 _customApiKeyBuffer = newCustomKey;
@@ -164,7 +167,7 @@ namespace RimTalkTTS.Simple.UI
             }
 
             listing.Label("模型名 (留空则使用上方 MiMo 模型)");
-            string newCustomModel = listing.TextEntry(_customModelBuffer, 2);
+            string newCustomModel = listing.TextEntry(_customModelBuffer, 1);
             if (newCustomModel != _customModelBuffer)
             {
                 _customModelBuffer = newCustomModel;

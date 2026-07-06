@@ -66,6 +66,9 @@ namespace RimTalkTTS.Simple.Service
 
                 string json = JsonConvert.SerializeObject(payload);
 
+                if (request.EventLog != null)
+                    request.EventLog.RequestJson = json;
+
                 TTSLogger.Info($"MiMo 请求: model={request.Model} isVoiceDesign={isVoiceDesign} streaming={streaming}", "MiMo");
                 TTSLogger.Debug($"MiMo JSON: {json.Substring(0, Math.Min(500, json.Length))}", "MiMo");
                 var httpRequest = new HttpRequestMessage(HttpMethod.Post, apiUrl)
@@ -73,6 +76,9 @@ namespace RimTalkTTS.Simple.Service
                     Content = new StringContent(json, Encoding.UTF8, "application/json")
                 };
                 httpRequest.Headers.Add("api-key", request.ApiKey);
+
+                if (request.EventLog != null)
+                    httpRequest.Properties["TTSEventLog"] = request.EventLog;
 
                 if (streaming)
                 {
@@ -94,6 +100,10 @@ namespace RimTalkTTS.Simple.Service
         {
             var response = await _httpClient.SendAsync(request, ct);
             string responseJson = await response.Content.ReadAsStringAsync();
+
+            var evtLog = GetEventLog(request);
+            if (evtLog != null)
+                evtLog.ResponseJson = responseJson.Length > 3000 ? responseJson.Substring(0, 3000) + "...(truncated)" : responseJson;
 
             if (!response.IsSuccessStatusCode)
             {
@@ -150,6 +160,9 @@ namespace RimTalkTTS.Simple.Service
             if (!response.IsSuccessStatusCode)
             {
                 string errorBody = await response.Content.ReadAsStringAsync();
+                var evtLogErr = GetEventLog(request);
+                if (evtLogErr != null)
+                    evtLogErr.ResponseJson = errorBody.Length > 3000 ? errorBody.Substring(0, 3000) + "...(truncated)" : errorBody;
                 string summary = errorBody.Length > 300 ? errorBody.Substring(0, 300) : errorBody;
                 TTSLogger.ErrorNotify($"MiMo 流式 HTTP {(int)response.StatusCode}: {summary}", "MiMo");
                 return null;
@@ -203,6 +216,10 @@ namespace RimTalkTTS.Simple.Service
                     return null;
                 }
 
+                var evtLogOk = GetEventLog(request);
+                if (evtLogOk != null)
+                    evtLogOk.ResponseJson = $"(streaming) {totalPcmBytes} bytes PCM, {pcmChunks.Count} chunks";
+
                 byte[] allPcm = new byte[totalPcmBytes];
                 int offset = 0;
                 foreach (var chunk in pcmChunks)
@@ -220,6 +237,13 @@ namespace RimTalkTTS.Simple.Service
 
                 return wavData;
             }
+        }
+
+        private static Util.TTSEventLog GetEventLog(HttpRequestMessage request)
+        {
+            if (request.Properties.TryGetValue("TTSEventLog", out var val) && val is Util.TTSEventLog log)
+                return log;
+            return null;
         }
 
         private static byte[] ConvertPcm16ToWav(byte[] pcmData, int sampleRate, int channels, int bitsPerSample)

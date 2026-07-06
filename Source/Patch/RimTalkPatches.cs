@@ -269,7 +269,7 @@ namespace RimTalkTTS.Simple.Patch
                         try
                         {
                             TTSStats.RecordRequest();
-                            byte[] audio = await Service.TTSService.GenerateSpeechAsync(text, persona, pawn, settings);
+                            byte[] audio = await Service.TTSService.GenerateSpeechAsync(text, persona, pawn, settings, evtLog);
                             sw.Stop();
 
                             if (audio != null && audio.Length > 0)

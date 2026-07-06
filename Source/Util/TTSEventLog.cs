@@ -28,6 +28,8 @@ namespace RimTalkTTS.Simple.Util
         public long ElapsedMs { get; set; }
         public string ErrorMessage { get; set; }
         public bool IsStreaming { get; set; }
+        public string RequestJson { get; set; }
+        public string ResponseJson { get; set; }
 
         public string GetStateLabel()
         {

@@ -1,3 +1,5 @@
+using RimTalkTTS.Simple.Util;
+
 namespace RimTalkTTS.Simple.Service
 {
     public class TTSRequest
@@ -11,5 +13,6 @@ namespace RimTalkTTS.Simple.Service
         public float Volume { get; set; } = 1.0f;
         public bool EnableStreaming { get; set; } = false;
         public string BaseUrl { get; set; }
+        public TTSEventLog EventLog { get; set; }
     }
 }

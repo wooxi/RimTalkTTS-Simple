@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using RimTalkTTS.Simple.Data;
 using RimTalkTTS.Simple.Provider;
+using RimTalkTTS.Simple.Util;
 using RimTalkPatches = RimTalkTTS.Simple.Patch.RimTalkPatches;
 using Verse;
 using RimWorld;
@@ -22,7 +23,7 @@ namespace RimTalkTTS.Simple.Service
             return RichTextPattern.Replace(text, "").Trim();
         }
 
-        public static async Task<byte[]> GenerateSpeechAsync(string text, string persona, Pawn pawn, TTSSettings settings)
+        public static async Task<byte[]> GenerateSpeechAsync(string text, string persona, Pawn pawn, TTSSettings settings, TTSEventLog evtLog = null)
         {
             text = StripRichTextTags(text);
             if (string.IsNullOrEmpty(text)) return null;
@@ -58,7 +59,8 @@ namespace RimTalkTTS.Simple.Service
                 Speed = settings.Speed,
                 Volume = settings.Volume,
                 EnableStreaming = settings.EnableStreaming,
-                BaseUrl = settings.GetEffectiveEndpointUrl()
+                BaseUrl = settings.GetEffectiveEndpointUrl(),
+                EventLog = evtLog
             };
 
             return await provider.GenerateSpeechAsync(request);
