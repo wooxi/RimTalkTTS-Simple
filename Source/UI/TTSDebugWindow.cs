@@ -51,7 +51,7 @@ namespace RimTalkTTS.Simple.UI
         {
             var inner = rect.ContractedBy(4f);
             float y = inner.y;
-            float lineH = 14f;
+            float lineH = 16f;
             Text.Font = GameFont.Tiny;
 
             var settings = TTSConfig.Settings;
@@ -168,7 +168,7 @@ namespace RimTalkTTS.Simple.UI
             Widgets.Label(new Rect(rect.x, rect.y, rect.width, 20f), title);
             float listTop = rect.y + 22f;
 
-            float contentH = events.Count * 30f + 10f;
+            float contentH = events.Count * 32f + 10f;
             Rect listOuter = new Rect(rect.x, listTop, rect.width, rect.height - 48f);
             Rect listInner = new Rect(0, 0, listOuter.width - 16f, Mathf.Max(contentH, listOuter.height));
 
@@ -179,7 +179,7 @@ namespace RimTalkTTS.Simple.UI
             {
                 var evt = events[i];
                 bool selected = _selectedIndex == i;
-                Rect rowRect = new Rect(0, y, listInner.width, 28f);
+                Rect rowRect = new Rect(0, y, listInner.width, 32f);
 
                 if (selected)
                     Widgets.DrawBoxSolid(rowRect, new Color(0.25f, 0.45f, 0.25f, 0.4f));
@@ -199,19 +199,19 @@ namespace RimTalkTTS.Simple.UI
 
                 string info = $"{evt.Timestamp:HH:mm:ss}  {evt.PawnName?.Substring(0, Math.Min(8, evt.PawnName?.Length ?? 0)) ?? "-"}";
                 GUI.color = new Color(0.7f, 0.7f, 0.7f);
-                Widgets.Label(new Rect(rowRect.x + 22f, rowRect.y + 1f, listInner.width - 30f, 14f), info);
+                Widgets.Label(new Rect(rowRect.x + 22f, rowRect.y + 2f, listInner.width - 30f, 14f), info);
                 GUI.color = Color.white;
 
                 string info2 = $"{evt.Voice?.Substring(0, Math.Min(10, evt.Voice?.Length ?? 0)) ?? "-"}  {evt.ElapsedMs}ms";
                 if (evt.AudioBytes > 0) info2 += $"  {evt.AudioBytes / 1024}KB";
                 if (!string.IsNullOrEmpty(evt.ErrorMessage))
                     info2 += $"  {evt.ErrorMessage.Substring(0, Math.Min(18, evt.ErrorMessage.Length))}";
-                Widgets.Label(new Rect(rowRect.x + 22f, rowRect.y + 15f, listInner.width - 30f, 12f), info2);
+                Widgets.Label(new Rect(rowRect.x + 22f, rowRect.y + 17f, listInner.width - 30f, 14f), info2);
 
                 if (Widgets.ButtonInvisible(rowRect))
                     _selectedIndex = (_selectedIndex == i) ? -1 : i;
 
-                y += 30f;
+                y += 32f;
             }
 
             Widgets.EndScrollView();
@@ -280,23 +280,31 @@ namespace RimTalkTTS.Simple.UI
         private void DetailLine(Rect inner, ref float y, float h, string text)
         {
             Widgets.Label(new Rect(inner.x, inner.y + y, inner.width, h), text);
-            y += h + 1f;
+            y += h + 4f;
         }
 
         private void DetailBlock(Rect inner, ref float y, string label, string content, float maxH)
         {
-            Rect lr = new Rect(inner.x, inner.y + y, inner.width, 14f);
+            Rect lr = new Rect(inner.x, inner.y + y, inner.width - 50f, 16f);
             GUI.color = new Color(0.8f, 0.8f, 0.5f);
             Widgets.Label(lr, label);
             GUI.color = Color.white;
-            y += 15f;
 
-            float th = Text.CalcHeight(content, inner.width - 4f);
+            Rect copyRect = new Rect(inner.xMax - 50f, inner.y + y, 48f, 16f);
+            GUI.color = new Color(0.4f, 0.5f, 0.6f);
+            if (Widgets.ButtonText(copyRect, "复制", false))
+            {
+                GUIUtility.systemCopyBuffer = content;
+            }
+            GUI.color = Color.white;
+            y += 18f;
+
+            float th = Text.CalcHeight(content, inner.width - 8f);
             th = Mathf.Min(th, maxH);
             Rect cr = new Rect(inner.x + 2f, inner.y + y, inner.width - 2f, th);
             Widgets.DrawBoxSolid(cr, new Color(0.03f, 0.03f, 0.05f, 0.9f));
-            Widgets.Label(cr.ContractedBy(2f), content);
-            y += th + 4f;
+            Widgets.Label(cr.ContractedBy(4f), content);
+            y += th + 8f;
         }
     }
 }
