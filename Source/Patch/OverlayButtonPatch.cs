@@ -14,10 +14,20 @@ namespace RimTalkTTS.Simple.Patch
 {
     public static class OverlayButtonPatch
     {
-        private static bool _statusBarExpanded = false;
         private const float BtnPadding = 5f;
         private const float BtnHeight = 22f;
         private const float BtnTextPadding = 8f;
+
+        private static readonly string[] BtnLabels = { "TTS 重置", "TTS 测试", "强制对话", "忽略全部", "TTS 调试" };
+        private static readonly Color[] BtnColors = {
+            new Color(0.6f, 0.3f, 0.3f),
+            new Color(0.25f, 0.45f, 0.25f),
+            new Color(0.3f, 0.35f, 0.5f),
+            new Color(0.45f, 0.35f, 0.25f),
+            new Color(0.35f, 0.3f, 0.5f),
+        };
+
+        private static Rect[] _btnScreenRects = new Rect[0];
 
         [HarmonyPatch]
         public static class OverlayMapComponentOnGUI_Patch
@@ -51,7 +61,6 @@ namespace RimTalkTTS.Simple.Patch
                     if (TTSConfig.Settings?.EnableTTS != true) return;
 
                     DrawOverlayButtons(gearRect);
-                    DrawStatusBar(gearRect);
                 }
                 catch (Exception ex)
                 {
@@ -60,30 +69,41 @@ namespace RimTalkTTS.Simple.Patch
             }
         }
 
-        private static readonly string[] BtnLabels = { "TTS 重置", "TTS 测试", "强制对话", "忽略全部", "TTS 调试" };
-        private static readonly Color[] BtnColors = {
-            new Color(0.6f, 0.3f, 0.3f),
-            new Color(0.25f, 0.45f, 0.25f),
-            new Color(0.3f, 0.35f, 0.5f),
-            new Color(0.45f, 0.35f, 0.25f),
-            new Color(0.35f, 0.3f, 0.5f),
-        };
-
-        private static void ExecuteBtnAction(int idx)
+        [HarmonyPatch]
+        public static class OverlayHandleInput_Patch
         {
-            switch (idx)
+            static bool Prepare()
             {
-                case 0:
-                    Service.TTSService.StopAll(false);
-                    Messages.Message("TTS 已重置", MessageTypeDefOf.TaskCompletion, false);
-                    break;
-                case 1: RunTestTTS(); break;
-                case 2: GenerateTalkForce(); break;
-                case 3: IgnoreAllTalks(); break;
-                case 4:
-                    RimTalkTTS.Simple.UI.TTSDebugWindow window = new RimTalkTTS.Simple.UI.TTSDebugWindow();
-                    Find.WindowStack.Add(window);
-                    break;
+                RimTalkPatches.ResolveRimTalkTypes();
+                return RimTalkPatches.OverlayType != null;
+            }
+
+            static MethodBase TargetMethod()
+            {
+                return AccessTools.Method(RimTalkPatches.OverlayType, "HandleInput");
+            }
+
+            static bool Prefix(object __instance)
+            {
+                if (!TTSConfig.IsEnabled) return true;
+                if (__instance == null) return true;
+                if (TTSConfig.Settings?.EnableTTS != true) return true;
+
+                Event currentEvent = Event.current;
+                if (currentEvent == null) return true;
+                if (currentEvent.type != EventType.MouseDown || currentEvent.button != 0) return true;
+
+                for (int i = 0; i < _btnScreenRects.Length && i < BtnLabels.Length; i++)
+                {
+                    if (_btnScreenRects[i].Contains(currentEvent.mousePosition))
+                    {
+                        currentEvent.Use();
+                        ExecuteBtnAction(i);
+                        return false;
+                    }
+                }
+
+                return true;
             }
         }
 
@@ -101,20 +121,39 @@ namespace RimTalkTTS.Simple.Patch
             float x = gearRect.x - totalWidth;
             float y = gearRect.y;
 
+            _btnScreenRects = new Rect[BtnLabels.Length];
+
             var prevColor = GUI.color;
             Text.Font = GameFont.Tiny;
 
             for (int i = 0; i < BtnLabels.Length; i++)
             {
                 Rect btnRect = new Rect(x, y, widths[i], BtnHeight);
+                _btnScreenRects[i] = btnRect;
                 GUI.color = BtnColors[i];
-                if (Widgets.ButtonText(btnRect, BtnLabels[i]))
-                    ExecuteBtnAction(i);
+                Widgets.ButtonText(btnRect, BtnLabels[i]);
                 x += widths[i] + BtnPadding;
             }
 
             GUI.color = prevColor;
             Text.Font = GameFont.Small;
+        }
+
+        private static void ExecuteBtnAction(int idx)
+        {
+            switch (idx)
+            {
+                case 0:
+                    Service.TTSService.StopAll(false);
+                    Messages.Message("TTS 已重置", MessageTypeDefOf.TaskCompletion, false);
+                    break;
+                case 1: RunTestTTS(); break;
+                case 2: GenerateTalkForce(); break;
+                case 3: IgnoreAllTalks(); break;
+                case 4:
+                    Find.WindowStack.Add(new RimTalkTTS.Simple.UI.TTSDebugWindow());
+                    break;
+            }
         }
 
         private static void RunTestTTS()
@@ -219,117 +258,6 @@ namespace RimTalkTTS.Simple.Patch
             {
                 Messages.Message($"忽略对话失败：{ex.Message}", MessageTypeDefOf.NegativeEvent, false);
             }
-        }
-
-        private static void DrawStatusBar(Rect gearRect)
-        {
-            float barHeight = 20f;
-            float barWidth = 320f;
-            float x = gearRect.xMax - barWidth;
-            float y = gearRect.y - barHeight - 6f;
-
-            Rect barRect = new Rect(x, y, barWidth, barHeight);
-
-            var settings = TTSConfig.Settings;
-            string endpointUrl = settings?.UseCustomEndpoint == true
-                ? settings.CustomEndpointUrl : "";
-            string providerName = settings?.Provider == TTSSettings.TTSProvider.EdgeTTS ? "Edge"
-                : (!string.IsNullOrEmpty(endpointUrl) ? "Custom" : "MiMo");
-
-            string status = (TTSConfig.IsEnabled && settings?.EnableTTS == true) ? "●" : "○";
-            Color statusColor = (TTSConfig.IsEnabled && settings?.EnableTTS == true)
-                ? new Color(0.3f, 0.7f, 0.3f) : new Color(0.5f, 0.5f, 0.5f);
-
-            string lastEvent = "";
-            var recent = TTSEventHistory.GetRecent(1).FirstOrDefault();
-            if (recent != null)
-            {
-                lastEvent = recent.EventState == TTSEventLog.State.Success
-                    ? $"✓{recent.AudioBytes / 1024}K"
-                    : recent.EventState == TTSEventLog.State.Failed
-                    ? "✗" : "...";
-            }
-
-            string stats = $"{TTSStats.TotalRequests}R/{TTSStats.TotalSuccess}S/{TTSStats.TotalFailed}F";
-
-            Widgets.DrawBoxSolid(barRect, new Color(0.08f, 0.08f, 0.1f, 0.92f));
-
-            var innerRect = barRect.ContractedBy(3f);
-            Text.Font = GameFont.Tiny;
-
-            Rect statusRect = new Rect(innerRect.x, innerRect.y, 12f, innerRect.height);
-            GUI.color = statusColor;
-            Widgets.Label(statusRect, status);
-            GUI.color = Color.white;
-
-            string text = $"{providerName} {lastEvent} | {stats}";
-            if (_statusBarExpanded) text += " ▼";
-            Rect textRect = new Rect(statusRect.xMax + 2f, innerRect.y, innerRect.width - 14f, innerRect.height);
-            Widgets.Label(textRect, text);
-            Text.Font = GameFont.Small;
-
-            if (Widgets.ButtonInvisible(barRect))
-                _statusBarExpanded = !_statusBarExpanded;
-
-            if (_statusBarExpanded)
-                DrawExpandedInfo(new Rect(x, y - 170f, barWidth, 160f));
-        }
-
-        private static Vector2 _expScrollPos;
-
-        private static void DrawExpandedInfo(Rect rect)
-        {
-            Widgets.DrawBoxSolid(rect, new Color(0.1f, 0.1f, 0.12f, 0.95f));
-
-            var inner = rect.ContractedBy(4f);
-            float lineH = 13f;
-            float y = inner.y;
-            Text.Font = GameFont.Tiny;
-
-            var settings = TTSConfig.Settings;
-            Widgets.Label(new Rect(inner.x, y, inner.width, lineH),
-                $"渠道: {(settings?.Provider == TTSSettings.TTSProvider.EdgeTTS ? "Edge TTS" : "MiMo TTS")}  "
-                + $"端点: {(settings?.UseCustomEndpoint == true ? settings.CustomEndpointUrl : "默认")}");
-            y += lineH;
-
-            string voice = settings?.Provider == TTSSettings.TTSProvider.EdgeTTS ? settings?.EdgeVoice : settings?.MiMoVoice;
-            Widgets.Label(new Rect(inner.x, y, inner.width, lineH), $"音色: {voice}  模型: {settings?.GetEffectiveModel()}");
-            y += lineH;
-
-            Widgets.Label(new Rect(inner.x, y, inner.width, lineH),
-                $"请求:{TTSStats.TotalRequests} 成功:{TTSStats.TotalSuccess} 失败:{TTSStats.TotalFailed} 取消:{TTSStats.TotalCancelled}");
-            y += lineH;
-
-            if (TTSStats.TotalSuccess > 0)
-                Widgets.Label(new Rect(inner.x, y, inner.width, lineH),
-                    $"平均延迟: {TTSStats.AvgElapsedMs:F0}ms 平均: {TTSStats.AvgAudioBytes / 1024}KB");
-            y += lineH + 3f;
-
-            Widgets.Label(new Rect(inner.x, y, inner.width, lineH), "最近事件:");
-            y += lineH;
-
-            var events = TTSEventHistory.GetRecent(6);
-            float listH = rect.yMax - y - 4f;
-            float contentH = events.Count * lineH + 4f;
-            Rect listOuter = new Rect(inner.x, y, inner.width, listH);
-            Rect listInner = new Rect(0, 0, listOuter.width - 10f, contentH);
-
-            Widgets.BeginScrollView(listOuter, ref _expScrollPos, listInner);
-
-            float ey = 0;
-            foreach (var evt in events)
-            {
-                GUI.color = evt.GetColor();
-                string line = $"{evt.Timestamp:HH:mm:ss} {(evt.EventState == TTSEventLog.State.Success ? "✓" : evt.EventState == TTSEventLog.State.Failed ? "✗" : "…")} ";
-                GUI.color = Color.white;
-                line += $"{evt.PawnName?.Substring(0, Math.Min(6, evt.PawnName?.Length ?? 0)) ?? "-"} | {evt.ElapsedMs}ms";
-                if (evt.AudioBytes > 0) line += $" | {evt.AudioBytes / 1024}KB";
-                Widgets.Label(new Rect(2f, ey, listInner.width - 4f, lineH), line);
-                ey += lineH;
-            }
-
-            Widgets.EndScrollView();
-            Text.Font = GameFont.Small;
         }
     }
 }
