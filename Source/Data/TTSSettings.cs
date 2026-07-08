@@ -29,6 +29,10 @@ namespace RimTalkTTS.Simple.Data
         public float Volume = 0.8f;
         public float Speed = 1.0f;
 
+        public bool EnablePawnTypeModelRouting = false;
+        public string ColonistModel = "mimo-v2.5-tts";
+        public string NonColonistModel = "mimo-v2.5-tts-voicedesign";
+
         public static List<VoiceModel> GetMiMoVoices()
         {
             return new List<VoiceModel>
@@ -88,6 +92,9 @@ namespace RimTalkTTS.Simple.Data
             Scribe_Values.Look(ref CustomEndpointUrl, "customEndpointUrl", "");
             Scribe_Values.Look(ref CustomApiKey, "customApiKey", "");
             Scribe_Values.Look(ref CustomModel, "customModel", "");
+            Scribe_Values.Look(ref EnablePawnTypeModelRouting, "enablePawnTypeModelRouting", false);
+            Scribe_Values.Look(ref ColonistModel, "colonistModel", "mimo-v2.5-tts");
+            Scribe_Values.Look(ref NonColonistModel, "nonColonistModel", "mimo-v2.5-tts-voicedesign");
         }
 
         public string GetEffectiveApiKey()
@@ -104,6 +111,15 @@ namespace RimTalkTTS.Simple.Data
             if (Provider == TTSProvider.MiMoTTS && UseCustomEndpoint && !string.IsNullOrWhiteSpace(CustomEndpointUrl))
                 return CustomEndpointUrl;
             return "https://api.xiaomimimo.com/v1/chat/completions";
+        }
+
+        public string GetModelForPawn(Pawn pawn)
+        {
+            if (pawn == null) return GetEffectiveModel();
+            if (!EnablePawnTypeModelRouting) return GetEffectiveModel();
+            if (UseCustomEndpoint && !string.IsNullOrWhiteSpace(CustomModel))
+                return CustomModel;
+            return pawn.IsColonist ? ColonistModel : NonColonistModel;
         }
 
         public string GetEffectiveModel()

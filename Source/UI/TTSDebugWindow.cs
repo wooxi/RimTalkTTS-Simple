@@ -243,8 +243,26 @@ namespace RimTalkTTS.Simple.UI
             }
 
             var evt = events[_selectedIndex];
-            float detailH = 500f;
-            Rect inner = new Rect(0, 0, rect.width - 16f, detailH);
+            float blockWidth = rect.width - 16f - 8f;
+
+            int lineCount = 5;
+            if (!string.IsNullOrEmpty(evt.ErrorMessage)) lineCount++;
+            float detailH = lineCount * 19f + 4f;
+
+            float CalcBlockH(string content) => 18f + Text.CalcHeight(content, blockWidth) + 8f;
+
+            if (!string.IsNullOrEmpty(evt.InputText))
+                detailH += CalcBlockH(evt.InputText);
+            if (!string.IsNullOrEmpty(evt.Persona))
+                detailH += CalcBlockH(evt.Persona);
+            if (!string.IsNullOrEmpty(evt.RequestJson))
+                detailH += CalcBlockH(evt.RequestJson);
+            if (!string.IsNullOrEmpty(evt.ResponseJson))
+                detailH += CalcBlockH(evt.ResponseJson);
+
+            detailH += 20f;
+
+            Rect inner = new Rect(0, 0, rect.width - 16f, Mathf.Max(detailH, rect.height));
             Widgets.BeginScrollView(rect, ref _detailScrollPos, inner);
 
             float y = 0;
@@ -262,16 +280,16 @@ namespace RimTalkTTS.Simple.UI
             y += 4f;
 
             if (!string.IsNullOrEmpty(evt.InputText))
-                DetailBlock(inner, ref y, "合成文本", evt.InputText, 60f);
+                DetailBlock(inner, ref y, "合成文本", evt.InputText);
 
             if (!string.IsNullOrEmpty(evt.Persona))
-                DetailBlock(inner, ref y, "人格描述", evt.Persona, 50f);
+                DetailBlock(inner, ref y, "人格描述", evt.Persona);
 
             if (!string.IsNullOrEmpty(evt.RequestJson))
-                DetailBlock(inner, ref y, "请求 JSON", evt.RequestJson, 100f);
+                DetailBlock(inner, ref y, "请求 JSON", evt.RequestJson);
 
             if (!string.IsNullOrEmpty(evt.ResponseJson))
-                DetailBlock(inner, ref y, "响应 JSON", evt.ResponseJson, 140f);
+                DetailBlock(inner, ref y, "响应 JSON", evt.ResponseJson);
 
             Text.Font = GameFont.Small;
             Widgets.EndScrollView();
@@ -283,7 +301,7 @@ namespace RimTalkTTS.Simple.UI
             y += h + 4f;
         }
 
-        private void DetailBlock(Rect inner, ref float y, string label, string content, float maxH)
+        private void DetailBlock(Rect inner, ref float y, string label, string content)
         {
             Rect lr = new Rect(inner.x, inner.y + y, inner.width - 50f, 16f);
             GUI.color = new Color(0.8f, 0.8f, 0.5f);
@@ -300,7 +318,6 @@ namespace RimTalkTTS.Simple.UI
             y += 18f;
 
             float th = Text.CalcHeight(content, inner.width - 8f);
-            th = Mathf.Min(th, maxH);
             Rect cr = new Rect(inner.x + 2f, inner.y + y, inner.width - 2f, th);
             Widgets.DrawBoxSolid(cr, new Color(0.03f, 0.03f, 0.05f, 0.9f));
             Widgets.Label(cr.ContractedBy(4f), content);

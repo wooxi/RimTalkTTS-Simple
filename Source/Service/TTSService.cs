@@ -40,13 +40,27 @@ namespace RimTalkTTS.Simple.Service
 
             if (settings.Provider == TTSSettings.TTSProvider.MiMoTTS)
             {
-                voice = perPawnVoice != PawnVoiceManager.DEFAULT ? perPawnVoice : settings.MiMoVoice;
-                model = settings.GetEffectiveModel();
+                model = settings.GetModelForPawn(pawn);
+                bool isVoiceDesignModel = (model ?? "").Contains("voicedesign");
+                voice = isVoiceDesignModel ? null
+                    : (perPawnVoice != PawnVoiceManager.DEFAULT ? perPawnVoice : settings.MiMoVoice);
                 apiKey = settings.GetEffectiveApiKey();
+
+                if (evtLog != null)
+                {
+                    evtLog.Model = model;
+                    evtLog.Voice = isVoiceDesignModel ? "(voice design)" : voice;
+                }
             }
             else
             {
                 voice = perPawnVoice != PawnVoiceManager.DEFAULT ? perPawnVoice : settings.EdgeVoice;
+
+                if (evtLog != null)
+                {
+                    evtLog.Model = "";
+                    evtLog.Voice = voice;
+                }
             }
 
             var request = new TTSRequest

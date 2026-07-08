@@ -115,18 +115,53 @@ namespace RimTalkTTS.Simple.UI
             }
 
             listing.Gap();
-            DrawDropdown(listing, "模型", settings.MiMoModel, TTSSettings.GetMiMoModels(),
-                v => settings.MiMoModel = v);
 
-            bool isVoiceDesign = (settings.MiMoModel ?? "").Contains("voicedesign");
-            if (!isVoiceDesign)
+            if (!settings.EnablePawnTypeModelRouting)
+            {
+                DrawDropdown(listing, "模型", settings.MiMoModel, TTSSettings.GetMiMoModels(),
+                    v => settings.MiMoModel = v);
+            }
+
+            bool anyPresetModel = !settings.EnablePawnTypeModelRouting
+                ? !(settings.MiMoModel ?? "").Contains("voicedesign")
+                : !(settings.ColonistModel ?? "").Contains("voicedesign")
+                  || !(settings.NonColonistModel ?? "").Contains("voicedesign");
+
+            if (anyPresetModel)
                 DrawDropdown(listing, "音色", settings.MiMoVoice, TTSSettings.GetMiMoVoices(),
                     v => settings.MiMoVoice = v);
             else
-                listing.Label("音色: 由人格描述自动设计 (Voice Design 模式)");
+                listing.Label("音色: 所有模型均为 Voice Design，音色自动设计");
 
             listing.Gap();
             listing.Label("提示：模组会自动读取 RimTalk 分配的角色人格作为音色描述");
+
+            listing.Gap();
+            listing.GapLine();
+            listing.Gap();
+
+            DrawPawnTypeModelSection(listing, settings);
+        }
+
+        private static void DrawPawnTypeModelSection(Listing_Standard listing, TTSSettings settings)
+        {
+            DrawSectionHeader(listing, "按人物类型分配模型");
+            listing.CheckboxLabeled("启用按人物类型分配模型", ref settings.EnablePawnTypeModelRouting);
+
+            if (!settings.EnablePawnTypeModelRouting)
+            {
+                listing.Label("关闭时使用上方全局模型设置");
+                return;
+            }
+
+            listing.Gap();
+            DrawDropdown(listing, "殖民者模型", settings.ColonistModel, TTSSettings.GetMiMoModels(),
+                v => settings.ColonistModel = v);
+            DrawDropdown(listing, "非殖民者模型 (访客/袭击者等)", settings.NonColonistModel, TTSSettings.GetMiMoModels(),
+                v => settings.NonColonistModel = v);
+
+            listing.Gap();
+            listing.Label("提示：殖民者与非殖民者可使用不同模型，Voice Design 模型会根据人格描述自动设计音色");
         }
 
         private static void DrawEdgeSettings(Listing_Standard listing, TTSSettings settings)
@@ -238,10 +273,11 @@ namespace RimTalkTTS.Simple.UI
 
                 if (_showRequestDetail)
                 {
-                    float reqH = Mathf.Min(120f, 14f * (r.RequestJson.Split('\n').Length + 2));
+                    float textWidth = listing.GetRect(0).width - 8f;
+                    Text.Font = GameFont.Tiny;
+                    float reqH = Mathf.Max(20f, Text.CalcHeight(r.RequestJson, textWidth));
                     Rect reqRect = listing.GetRect(reqH);
                     Widgets.DrawBoxSolid(reqRect, new Color(0.05f, 0.05f, 0.05f, 0.8f));
-                    Text.Font = GameFont.Tiny;
                     Widgets.Label(reqRect.ContractedBy(4f), r.RequestJson);
                     Text.Font = GameFont.Small;
                 }
@@ -254,10 +290,11 @@ namespace RimTalkTTS.Simple.UI
 
                 if (_showResponseDetail)
                 {
-                    float resH = Mathf.Min(120f, 14f * (r.ResponseJson.Split('\n').Length + 2));
+                    float textWidth = listing.GetRect(0).width - 8f;
+                    Text.Font = GameFont.Tiny;
+                    float resH = Mathf.Max(20f, Text.CalcHeight(r.ResponseJson, textWidth));
                     Rect resRect = listing.GetRect(resH);
                     Widgets.DrawBoxSolid(resRect, new Color(0.05f, 0.05f, 0.05f, 0.8f));
-                    Text.Font = GameFont.Tiny;
                     Widgets.Label(resRect.ContractedBy(4f), r.ResponseJson);
                     Text.Font = GameFont.Small;
                 }

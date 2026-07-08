@@ -252,10 +252,10 @@ namespace RimTalkTTS.Simple.Patch
                     {
                         PawnName = pawn.LabelShort,
                         Channel = providerName,
-                        Voice = settings.Provider == Data.TTSSettings.TTSProvider.EdgeTTS ? settings.EdgeVoice : settings.MiMoVoice,
+                        Voice = null,
                         InputText = text,
                         Persona = persona,
-                        Model = settings.Provider == Data.TTSSettings.TTSProvider.MiMoTTS ? settings.MiMoModel : "",
+                        Model = null,
                         IsStreaming = settings.EnableStreaming,
                         EventState = TTSEventLog.State.Pending
                     };

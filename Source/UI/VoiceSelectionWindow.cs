@@ -135,7 +135,8 @@ namespace RimTalkTTS.Simple.UI
 
             if (_settings.Provider == TTSSettings.TTSProvider.MiMoTTS)
             {
-                bool isVoiceDesign = (_settings.MiMoModel ?? "").Contains("voicedesign");
+                string effectiveModel = _settings.GetModelForPawn(_pawn);
+                bool isVoiceDesign = (effectiveModel ?? "").Contains("voicedesign");
                 if (isVoiceDesign) return new List<VoiceModel>();
                 return TTSSettings.GetMiMoVoices();
             }
